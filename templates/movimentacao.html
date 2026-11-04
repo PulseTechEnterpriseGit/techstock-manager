@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white py-3">
+                <h4 class="card-title mb-0 fw-semibold"><i class="bi bi-arrow-left-right"></i> Lançamento Operacional de Estoque</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Selecione o Ativo *</label>
+                        <select name="produto_id" class="form-select" required>
+                            <option value="" disabled selected>Escolha o item...</option>
+                            {% for p in produtos %}
+                                <option value="{{ p.id }}">{{ p.sku }} - {{ p.nome }} (Saldo Atual: {{ p.estoque_atual }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tipo de Movimentação *</label>
+                            <select name="tipo" class="form-select" required>
+                                <option value="Entrada">Entrada (Suprimento / Compra)</option>
+                                <option value="Saida">Saída (Venda / Aplicação Bancada)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Quantidade Transacionada *</label>
+                            <input type="number" min="1" name="quantidade" class="form-control" placeholder="1" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Justificativa / Documento / Observação *</label>
+                        <input type="text" name="justificativa" class="form-control" placeholder="Ex: NF-e 45210 ou OS Bancada #1029" required>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Voltar ao Painel</a>
+                        <button type="submit" class="btn btn-success px-4">Consolidar Movimentação</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h3 fw-bold mb-0">Dashboard Consolidado de Inventário</h2>
+        <p class="text-muted small">Monitorização operacional em tempo real de ativos físicos e digitais</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('movimentacao') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left-right"></i> Lançar Movimentação
+        </a>
+        <a href="{{ url_for('novo_produto') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Cadastrar Ativo
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>SKU</th>
+                        <th>Ativo / Descrição</th>
+                        <th>Classificação</th>
+                        <th>Categoria</th>
+                        <th>Fornecedor</th>
+                        <th>Preço Unit.</th>
+                        <th>Saldo Atual</th>
+                        <th>Ponto Reposição</th>
+                        <th>Localização / Licença</th>
+                        <th>Status</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in produtos %}
+                    <tr class="{% if item.estoque_atual <= item.estoque_minimo %}table-warning{% endif %}">
+                        <td class="fw-bold font-monospace">{{ item.sku }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ item.ativo }}</div>
+                            <small class="text-muted">{{ item.fabricante }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ item.classificacao }}</span>
+                        </td>
+                        <!-- Categoria e Fornecedor exibidos via JOIN (sem IDs crus) -->
+                        <td>{{ item.categoria }}</td>
+                        <td>{{ item.fornecedor }}</td>
+                        <td>R$ {{ "%.2f"|format(item.preco_venda) }}</td>
+                        <td class="fw-bold text-center fs-6">{{ item.estoque_atual }}</td>
+                        <td class="text-center text-muted">{{ item.estoque_minimo }}</td>
+                        <td>
+                            <div>{{ item.localizacao }}</div>
+                            {% if item.modalidade_licenca %}
+                                <small class="badge bg-info text-dark">{{ item.modalidade_licenca }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.estoque_atual <= item.estoque_minimo %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Risco de Ruptura / Reposição Necessária
+                                </span>
+                            {% else %}
+                                <span class="badge bg-success">Regular</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <form action="{{ url_for('remover_produto', produto_id=item.id) }}" method="POST" onsubmit="return confirm('Confirma a desativação deste item do catálogo?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Descontinuar Ativo">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="11" class="text-center py-4 text-muted">
+                            Nenhum ativo catalogado até o momento.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white py-3">
+                <h4 class="card-title mb-0 fw-semibold"><i class="bi bi-plus-circle"></i> Provisionamento de Novo Ativo</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">SKU do Item *</label>
+                            <input type="text" name="sku" class="form-control" placeholder="Ex: HW-SSD-2TB" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Nome Comercial do Ativo *</label>
+                            <input type="text" name="nome" class="form-control" placeholder="Ex: SSD NVMe 2TB PCIe 4.0" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fabricante *</label>
+                            <input type="text" name="fabricante" class="form-control" placeholder="Ex: Kingston, Microsoft" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Classificação *</label>
+                            <select name="classificacao" class="form-select" required>
+                                <option value="Hardware">Hardware</option>
+                                <option value="Software">Software</option>
+                                <option value="Periférico">Periférico</option>
+                            </select>
+                        </div>
+
+                        <!-- Categorias e Fornecedores alimentados dinamicamente do banco -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Categoria *</label>
+                            <select name="categoria_id" class="form-select" required>
+                                <option value="" disabled selected>Selecione a categoria...</option>
+                                {% for cat in categorias %}
+                                    <option value="{{ cat.id }}">{{ cat.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fornecedor Homologado *</label>
+                            <select name="fornecedor_id" class="form-select" required>
+                                <option value="" disabled selected>Selecione o fornecedor...</option>
+                                {% for f in fornecedores %}
+                                    <option value="{{ f.id }}">{{ f.razao_social }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Preço de Venda (R$) *</label>
+                            <input type="number" step="0.01" min="0.01" name="preco_venda" class="form-control" placeholder="0.00" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Volume Inicial em Estoque *</label>
+                            <input type="number" min="0" name="estoque_atual" class="form-control" value="0" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Ponto de Reposição (Mínimo) *</label>
+                            <input type="number" min="0" name="estoque_minimo" class="form-control" value="5" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Localização Física / Digital *</label>
+                            <input type="text" name="localizacao" class="form-control" placeholder="Ex: Prateleira B3 ou Cofre Digital #03" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Modalidade de Licença (se aplicável)</label>
+                            <input type="text" name="modalidade_licenca" class="form-control" placeholder="Ex: Assinatura Anual, Perpétua/ESD, OEM">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Especificação Técnica / Versão</label>
+                            <textarea name="especificacao_tecnica" rows="2" class="form-control" placeholder="Detalhes técnicos adicionais..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary px-4">Salvar Ativo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
