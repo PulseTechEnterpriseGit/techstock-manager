@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="d-flex justify-content-between align-items-center mb-3 d-print-none">
+            <a href="{{ url_for('listar_vendas') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Histórico de Vendas
+            </a>
+            <button onclick="window.print();" class="btn btn-primary">
+                <i class="bi bi-printer"></i> Imprimir Recibo Fiscal
+            </button>
+        </div>
+
+        <div class="card shadow border-0 p-4 bg-white">
+            <div class="row border-bottom pb-4 mb-4 align-items-center">
+                <div class="col-md-7">
+                    <h3 class="fw-bold text-primary mb-1"><i class="bi bi-cpu"></i> TechStore Informática</h3>
+                    <p class="text-muted small mb-0">Serviços Corporativos, Hardware & Licenciamento Digital</p>
+                    <p class="text-muted small mb-0">CNPJ: 45.123.890/0001-77 | Goiânia - GO</p>
+                </div>
+                <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                    <span class="badge bg-success fs-6 px-3 py-2 mb-2">Transação Homologada</span>
+                    <h5 class="fw-bold text-dark font-monospace mb-0">{{ venda.numero_pedido }}</h5>
+                    <small class="text-muted">{{ venda.data_hora }}</small>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6">
+                    <div class="p-3 bg-light rounded border">
+                        <h6 class="text-uppercase text-muted small fw-bold">Cliente / Tomador</h6>
+                        <div class="fw-bold">{{ venda.cliente_nome }}</div>
+                        <div class="text-muted small">Doc: {{ venda.cliente_documento }}</div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="p-3 bg-light rounded border">
+                        <h6 class="text-uppercase text-muted small fw-bold">Operação & Caixa</h6>
+                        <div><strong>Operador Responsável:</strong> {{ venda.operador_nome }}</div>
+                        <div><strong>Forma de Pagamento:</strong> <span class="badge bg-primary">{{ venda.forma_pagamento }}</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-list-check"></i> Detalhamento dos Ativos Faturados</h6>
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>SKU</th>
+                            <th>Descrição do Item</th>
+                            <th>Tipo de Ativo</th>
+                            <th class="text-center">Qtd.</th>
+                            <th>Preço Praticado</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in itens %}
+                        <tr>
+                            <td class="font-monospace fw-semibold">{{ item.sku }}</td>
+                            <td>
+                                <div>{{ item.produto_nome }}</div>
+                                {% if item.modalidade_licenca %}
+                                    <small class="badge bg-info text-dark">{{ item.modalidade_licenca }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.classificacao == 'Software' %}
+                                    <span class="badge bg-primary"><i class="bi bi-key"></i> Licença Digital</span>
+                                {% else %}
+                                    <span class="badge bg-secondary"><i class="bi bi-box"></i> Ativo Físico</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center fw-bold">{{ item.quantidade_vendida }}</td>
+                            <td>R$ {{ "%.2f"|format(item.preco_unitario_praticado) }}</td>
+                            <td class="fw-bold text-dark">R$ {{ "%.2f"|format(item.subtotal_item) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-group-divider">
+                        <tr>
+                            <td colspan="5" class="text-end fw-bold fs-5">Valor Total da Operação:</td>
+                            <td class="fw-bold fs-5 text-success">R$ {{ "%.2f"|format(venda.valor_total) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="p-3 bg-light rounded border small text-muted text-center">
+                Autenticação Digital: <code>{{ venda.numero_pedido }}-ACID-OK</code>. Recibo gerado pelo TechStock Manager.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

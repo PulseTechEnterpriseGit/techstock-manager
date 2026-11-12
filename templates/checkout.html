@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h3 fw-bold mb-0"><i class="bi bi-cart-check"></i> Frente de Caixa / Terminal PDV</h2>
+        <p class="text-muted small">Orquestração de vendas corporativas com transação atômica ACID</p>
+    </div>
+</div>
+
+<form method="POST" id="checkoutForm">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white py-2">
+                    <h5 class="card-title mb-0 fs-6"><i class="bi bi-person-vcard"></i> Identificação do Cliente</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Razão Social / Nome Completo *</label>
+                        <input type="text" name="cliente_nome" class="form-control" placeholder="Ex: Nexus Soluções B2B" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">CPF / CNPJ *</label>
+                        <input type="text" name="cliente_documento" class="form-control" placeholder="00.000.000/0001-00" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Modalidade de Pagamento *</label>
+                        <select name="forma_pagamento" class="form-select" required>
+                            <option value="PIX">PIX Corporativo (Instantâneo)</option>
+                            <option value="CARTAO_CREDITO">Cartão de Crédito</option>
+                            <option value="BOLETO_FATURADO">Boleto Faturado (B2B)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 bg-dark text-white">
+                <div class="card-body p-4 text-center">
+                    <h6 class="text-uppercase text-white-50 small mb-2">Total Consolidado da Venda</h6>
+                    <div class="display-6 fw-bold text-success mb-3" id="displayTotalGeral">R$ 0,00</div>
+                    <button type="submit" class="btn btn-success btn-lg w-100 fw-semibold" id="btnConfirmarVenda" disabled>
+                        <i class="bi bi-shield-check"></i> Confirmar Venda (ACID)
+                    </button>
+                    <small class="text-white-50 d-block mt-2">Transação protegida com commit/rollback automático</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2">
+                    <h5 class="card-title mb-0 fs-6"><i class="bi bi-box-seam"></i> Adicionar Produtos / Licenças</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-7">
+                            <label class="form-label fw-semibold">Selecionar Ativo Disponível</label>
+                            <select id="produtoSelect" class="form-select">
+                                <option value="" disabled selected>Escolha um produto ou licença...</option>
+                                {% for p in produtos %}
+                                    <option value="{{ p.id }}" 
+                                            data-nome="{{ p.nome }}" 
+                                            data-sku="{{ p.sku }}"
+                                            data-preco="{{ p.preco_venda }}" 
+                                            data-estoque="{{ p.estoque_atual }}"
+                                            data-classificacao="{{ p.classificacao }}">
+                                        {{ p.sku }} - {{ p.nome }} | Saldo: {{ p.estoque_atual }} un | R$ {{ "%.2f"|format(p.preco_venda) }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Qtd.</label>
+                            <input type="number" id="qtdInput" class="form-control" min="1" value="1">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-primary w-100" id="btnAdicionarAoCarrinho">
+                                <i class="bi bi-plus-lg"></i> Inserir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-secondary text-white py-2">
+                    <h5 class="card-title mb-0 fs-6"><i class="bi bi-cart3"></i> Composição do Pedido (Itens_Venda)</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="tabelaCarrinho">
+                        <thead class="table-light">
+                            <tr>
+                                <th>SKU / Ativo</th>
+                                <th>Tipo</th>
+                                <th class="text-center">Qtd.</th>
+                                <th>Preço Unit.</th>
+                                <th>Subtotal</th>
+                                <th class="text-center">Remover</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpoCarrinho">
+                            <tr id="linhaVazia">
+                                <td colspan="6" class="text-center text-muted py-4">O carrinho está vazio. Adicione itens acima.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    const carrinho = [];
+    const select = document.getElementById('produtoSelect');
+    const qtdInput = document.getElementById('qtdInput');
+    const btnAdd = document.getElementById('btnAdicionarAoCarrinho');
+    const corpo = document.getElementById('corpoCarrinho');
+    const displayTotal = document.getElementById('displayTotalGeral');
+    const btnSubmit = document.getElementById('btnConfirmarVenda');
+
+    btnAdd.addEventListener('click', () => {
+        const selectedOption = select.options[select.selectedIndex];
+        if (!selectedOption || !selectedOption.value) {
+            alert('Por favor, selecione um produto válido.');
+            return;
+        }
+
+        const id = selectedOption.value;
+        const nome = selectedOption.getAttribute('data-nome');
+        const sku = selectedOption.getAttribute('data-sku');
+        const preco = parseFloat(selectedOption.getAttribute('data-preco'));
+        const estoque = parseInt(selectedOption.getAttribute('data-estoque'));
+        const classificacao = selectedOption.getAttribute('data-classificacao');
+        const qtd = parseInt(qtdInput.value);
+
+        if (isNaN(qtd) || qtd <= 0) {
+            alert('A quantidade deve ser de no mínimo 1 unidade.');
+            return;
+        }
+
+        const itemExistente = carrinho.find(item => item.id === id);
+        const qtdTotalDesejada = (itemExistente ? itemExistente.quantidade : 0) + qtd;
+
+        if (qtdTotalDesejada > estoque) {
+            alert(`Saldo insuficiente para '${nome}'. Disponível: ${estoque}, Solicitado: ${qtdTotalDesejada}.`);
+            return;
+        }
+
+        if (itemExistente) {
+            itemExistente.quantidade += qtd;
+            itemExistente.subtotal = itemExistente.quantidade * preco;
+        } else {
+            carrinho.push({
+                id: id,
+                sku: sku,
+                nome: nome,
+                preco: preco,
+                quantidade: qtd,
+                subtotal: qtd * preco,
+                classificacao: classificacao
+            });
+        }
+
+        atualizarTelaCarrinho();
+    });
+
+    function removerItem(index) {
+        carrinho.splice(index, 1);
+        atualizarTelaCarrinho();
+    }
+
+    function atualizarTelaCarrinho() {
+        corpo.innerHTML = '';
+        let total = 0;
+
+        if (carrinho.length === 0) {
+            corpo.innerHTML = `<tr id="linhaVazia"><td colspan="6" class="text-center text-muted py-4">O carrinho está vazio. Adicione itens acima.</td></tr>`;
+            btnSubmit.disabled = true;
+        } else {
+            btnSubmit.disabled = false;
+            carrinho.forEach((item, index) => {
+                total += item.subtotal;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <strong>${item.sku}</strong> - ${item.nome}
+                        <input type="hidden" name="produto_id[]" value="${item.id}">
+                    </td>
+                    <td><span class="badge bg-secondary">${item.classificacao}</span></td>
+                    <td class="text-center">
+                        ${item.quantidade}
+                        <input type="hidden" name="quantidade[]" value="${item.quantidade}">
+                    </td>
+                    <td>R$ ${item.preco.toFixed(2)}</td>
+                    <td class="fw-bold">R$ ${item.subtotal.toFixed(2)}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerItem(${index})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+                corpo.appendChild(tr);
+            });
+        }
+
+        displayTotal.innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
+    }
+</script>
+{% endblock %}
