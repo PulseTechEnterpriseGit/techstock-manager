@@ -3,88 +3,91 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 class="h3 fw-bold mb-0">Dashboard Consolidado de Inventário</h2>
-        <p class="text-muted small">Monitorização operacional em tempo real de ativos físicos e digitais</p>
+        <h2 class="h3 fw-bold mb-0"><i class="bi bi-boxes"></i> Catálogo Corporativo & Inventário</h2>
+        <p class="text-muted small">Visão consolidada de ativos físicos, licenças digitais e pontos de reposição</p>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ url_for('movimentacao') }}" class="btn btn-outline-primary">
-            <i class="bi bi-arrow-left-right"></i> Lançar Movimentação
+        <a href="{{ url_for('checkout') }}" class="btn btn-success">
+            <i class="bi bi-cart4"></i> Abrir Frente de Caixa (PDV)
         </a>
+        {% if session.get('perfil_acesso') == 'GERENTE' %}
         <a href="{{ url_for('novo_produto') }}" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Cadastrar Ativo
+            <i class="bi bi-plus-circle"></i> Novo Ativo
         </a>
+        {% endif %}
     </div>
 </div>
 
 <div class="card shadow-sm border-0">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th>SKU</th>
-                        <th>Ativo / Descrição</th>
-                        <th>Classificação</th>
-                        <th>Categoria</th>
-                        <th>Fornecedor</th>
-                        <th>Preço Unit.</th>
-                        <th>Saldo Atual</th>
-                        <th>Ponto Reposição</th>
-                        <th>Localização / Licença</th>
-                        <th>Status</th>
-                        <th class="text-center">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in produtos %}
-                    <tr class="{% if item.estoque_atual <= item.estoque_minimo %}table-warning{% endif %}">
-                        <td class="fw-bold font-monospace">{{ item.sku }}</td>
-                        <td>
-                            <div class="fw-semibold">{{ item.ativo }}</div>
-                            <small class="text-muted">{{ item.fabricante }}</small>
-                        </td>
-                        <td>
-                            <span class="badge bg-secondary">{{ item.classificacao }}</span>
-                        </td>
-                        <!-- Categoria e Fornecedor exibidos via JOIN (sem IDs crus) -->
-                        <td>{{ item.categoria }}</td>
-                        <td>{{ item.fornecedor }}</td>
-                        <td>R$ {{ "%.2f"|format(item.preco_venda) }}</td>
-                        <td class="fw-bold text-center fs-6">{{ item.estoque_atual }}</td>
-                        <td class="text-center text-muted">{{ item.estoque_minimo }}</td>
-                        <td>
-                            <div>{{ item.localizacao }}</div>
-                            {% if item.modalidade_licenca %}
-                                <small class="badge bg-info text-dark">{{ item.modalidade_licenca }}</small>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>SKU</th>
+                    <th>Ativo / Fabricante</th>
+                    <th>Classificação</th>
+                    <th>Categoria / Fornecedor</th>
+                    <th>Localização</th>
+                    <th>Preço Venda</th>
+                    <th class="text-center">Saldo Atual</th>
+                    <th>Status</th>
+                    {% if session.get('perfil_acesso') == 'GERENTE' %}
+                    <th class="text-center">Ações</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in produtos %}
+                <tr class="{% if p.estoque_atual <= p.estoque_minimo %}table-danger{% endif %}">
+                    <td class="font-monospace fw-bold">{{ p.sku }}</td>
+                    <td>
+                        <div class="fw-bold">{{ p.ativo }}</div>
+                        <small class="text-muted">{{ p.fabricante }}</small>
+                    </td>
+                    <td>
+                        {% if p.classificacao == 'Software' %}
+                            <span class="badge bg-primary"><i class="bi bi-key"></i> Software</span>
+                            {% if p.modalidade_licenca %}
+                                <div class="small text-muted mt-1">{{ p.modalidade_licenca }}</div>
                             {% endif %}
-                        </td>
-                        <td>
-                            {% if item.estoque_atual <= item.estoque_minimo %}
-                                <span class="badge bg-danger">
-                                    <i class="bi bi-exclamation-triangle-fill"></i> Risco de Ruptura / Reposição Necessária
-                                </span>
-                            {% else %}
-                                <span class="badge bg-success">Regular</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center">
-                            <form action="{{ url_for('remover_produto', produto_id=item.id) }}" method="POST" onsubmit="return confirm('Confirma a desativação deste item do catálogo?');">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Descontinuar Ativo">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="11" class="text-center py-4 text-muted">
-                            Nenhum ativo catalogado até o momento.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                        {% else %}
+                            <span class="badge bg-secondary"><i class="bi bi-cpu"></i> {{ p.classificacao }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div>{{ p.categoria }}</div>
+                        <small class="text-muted">{{ p.fornecedor }}</small>
+                    </td>
+                    <td><small>{{ p.localizacao }}</small></td>
+                    <td class="fw-semibold">R$ {{ "%.2f"|format(p.preco_venda) }}</td>
+                    <td class="text-center">
+                        <span class="fs-6 fw-bold">{{ p.estoque_atual }}</span>
+                        <small class="text-muted d-block">Mín: {{ p.estoque_minimo }}</small>
+                    </td>
+                    <td>
+                        {% if p.estoque_atual <= p.estoque_minimo %}
+                            <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> Alerta Ruptura</span>
+                        {% else %}
+                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Regular</span>
+                        {% endif %}
+                    </td>
+                    {% if session.get('perfil_acesso') == 'GERENTE' %}
+                    <td class="text-center">
+                        <form action="{{ url_for('remover_produto', produto_id=p.id) }}" method="POST" onsubmit="return confirm('Confirma a exclusão definitiva deste ativo?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir Ativo">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-muted">Nenhum ativo cadastrado no inventário.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}
