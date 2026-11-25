@@ -1,56 +1,41 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="h3 fw-bold mb-0"><i class="bi bi-receipt-cutoff"></i> Livro-Razão de Vendas & Faturamento</h2>
-        <p class="text-muted small">Histórico consolidado de pedidos fechados com rastreabilidade de operador</p>
-    </div>
-    <a href="{{ url_for('checkout') }}" class="btn btn-primary">
-        <i class="bi bi-cart4"></i> Nova Venda (PDV)
-    </a>
-</div>
-
-<div class="card shadow-sm border-0">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-dark">
-                <tr>
-                    <th>Número Pedido</th>
-                    <th>Data / Hora</th>
-                    <th>Cliente</th>
-                    <th>Documento</th>
-                    <th>Operador</th>
-                    <th>Pagamento</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                    <th class="text-center">Comprovante</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for v in vendas %}
-                <tr>
-                    <td class="font-monospace fw-bold">{{ v.numero_pedido }}</td>
-                    <td><small>{{ v.data_hora }}</small></td>
-                    <td>{{ v.cliente_nome }}</td>
-                    <td><small class="text-muted">{{ v.cliente_documento }}</small></td>
-                    <td>{{ v.operador_nome }}</td>
-                    <td><span class="badge bg-secondary">{{ v.forma_pagamento }}</span></td>
-                    <td class="fw-bold text-success">R$ {{ "%.2f"|format(v.valor_total) }}</td>
-                    <td><span class="badge bg-success">{{ v.status_venda }}</span></td>
-                    <td class="text-center">
-                        <a href="{{ url_for('recibo_venda', numero_pedido=v.numero_pedido) }}" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-file-earmark-text"></i> Recibo
-                        </a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="9" class="text-center py-4 text-muted">Nenhuma venda registrada até o momento.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<div class="card">
+    <h2>Historico de Vendas Realizadas</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Pedido</th>
+                <th>Data / Hora</th>
+                <th>Cliente B2B</th>
+                <th>CNPJ</th>
+                <th>Pagamento</th>
+                <th>Operador</th>
+                <th>Total</th>
+                <th>Comprovante</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in vendas %}
+            <tr>
+                <td><strong>#{{ v['id'] }}</strong></td>
+                <td>{{ v['data_venda'] }}</td>
+                <td>{{ v['cliente_nome'] }}</td>
+                <td>{{ v['cliente_cnpj'] }}</td>
+                <td>{{ v['forma_pagamento'] }}</td>
+                <td>{{ v['operador_nome'] }}</td>
+                <td><strong>R$ {{ "%.2f"|format(v['valor_total']) }}</strong></td>
+                <td>
+                    <div style="display: flex; gap: 6px;">
+                        <a href="{{ url_for('recibo', venda_id=v['id']) }}" class="btn btn-outline">Ver</a>
+                        <a href="{{ url_for('recibo_pdf', venda_id=v['id']) }}" target="_blank" class="btn btn-primary">PDF</a>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" style="text-align:center; color:var(--text-muted);">Nenhuma venda registrada.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}

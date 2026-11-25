@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h2>Cadastrar Novo Acesso (Controle RBAC)</h2>
+    <form method="POST" style="display: grid; grid-template-columns: 2fr 2fr 1.5fr 1fr auto; gap: 0.75rem; align-items: end;">
+        <div>
+            <label>Nome Completo</label>
+            <input type="text" name="nome" placeholder="Ex: Ana Paula Silva" required>
+        </div>
+        <div>
+            <label>E-mail Corporativo</label>
+            <input type="email" name="email" placeholder="ana@techstore.com" required>
+        </div>
+        <div>
+            <label>Senha Inicial</label>
+            <input type="password" name="senha" placeholder="Min. 6 caracteres" required>
+        </div>
+        <div>
+            <label>Nivel de Acesso</label>
+            <select name="cargo" required>
+                <option value="operador">Operador</option>
+                <option value="gerente">Gerente</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Criar Usuario</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Usuarios Cadastrados no Sistema</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Perfil / Categoria</th>
+                <th>Data de Criacao</th>
+                <th>Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in usuarios %}
+            <tr>
+                <td>#{{ u['id'] }}</td>
+                <td><strong>{{ u['nome'] }}</strong></td>
+                <td>{{ u['email'] }}</td>
+                <td><span class="badge badge-neutral">{{ u['cargo']|upper }}</span></td>
+                <td>{{ u['criado_em'] }}</td>
+                <td>
+                    {% if u['id'] != session.get('usuario_id') %}
+                    <form method="POST" action="{{ url_for('excluir_usuario', usuario_id=u['id']) }}">
+                        <button type="submit" class="btn btn-danger">Excluir</button>
+                    </form>
+                    {% else %}
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Sessao Atual</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

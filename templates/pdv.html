@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h2>Frente de Caixa (PDV B2B)</h2>
+    <form method="POST">
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div>
+                <label>Razao Social / Cliente</label>
+                <input type="text" name="cliente_nome" required placeholder="Ex: Nexus Solucoes Ltda">
+            </div>
+            <div>
+                <label>CNPJ</label>
+                <input type="text" name="cliente_cnpj" required placeholder="00.000.000/0001-00">
+            </div>
+            <div>
+                <label>Forma de Pagamento</label>
+                <select name="forma_pagamento">
+                    <option value="PIX Corporativo">PIX Corporativo</option>
+                    <option value="Boleto Faturado 30d">Boleto Faturado 30d</option>
+                    <option value="Cartao Corporativo">Cartao Corporativo</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="lista-itens" style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+            <div class="item-row" style="display: grid; grid-template-columns: 3fr 1fr; gap: 1rem;">
+                <select name="produto_id[]" required>
+                    <option value="">Selecione o produto...</option>
+                    {% for p in produtos %}
+                    <option value="{{ p['id'] }}">
+                        {{ p['sku'] }} - {{ p['nome'] }} | R$ {{ "%.2f"|format(p['preco']) }}
+                        ({{ 'Digital' if p['tipo'] == 'digital' else 'Saldo: ' ~ p['estoque_atual'] }})
+                    </option>
+                    {% endfor %}
+                </select>
+                <input type="number" name="quantidade[]" min="1" value="1" required placeholder="Qtd">
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between;">
+            <button type="button" class="btn btn-outline" onclick="adicionarItem()">+ Adicionar Item</button>
+            <button type="submit" class="btn btn-primary">Finalizar Venda e Gerar Recibo</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function adicionarItem() {
+        const container = document.getElementById('lista-itens');
+        const novaLinha = container.querySelector('.item-row').cloneNode(true);
+        novaLinha.querySelector('select').value = '';
+        novaLinha.querySelector('input').value = 1;
+        container.appendChild(novaLinha);
+    }
+</script>
+{% endblock %}

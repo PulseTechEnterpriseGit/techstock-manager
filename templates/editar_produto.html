@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width: 720px; margin: 0 auto;">
+    <h2>Editar Produto: {{ produto['sku'] }}</h2>
+    <form method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div>
+            <label>Codigo SKU</label>
+            <input type="text" name="sku" value="{{ produto['sku'] }}" required>
+        </div>
+        <div>
+            <label>Nome do Produto</label>
+            <input type="text" name="nome" value="{{ produto['nome'] }}" required>
+        </div>
+        <div>
+            <label>Tipo de Produto</label>
+            <select name="tipo" required>
+                <option value="fisico" {{ 'selected' if produto['tipo'] == 'fisico' else '' }}>Fisico (Com Estoque)</option>
+                <option value="digital" {{ 'selected' if produto['tipo'] == 'digital' else '' }}>Digital (Chave de Acesso)</option>
+            </select>
+        </div>
+        <div>
+            <label>Preco Unitario (R$)</label>
+            <input type="number" step="0.01" name="preco" value="{{ produto['preco'] }}" required>
+        </div>
+        <div>
+            <label>Estoque Atual</label>
+            <input type="number" name="estoque_atual" value="{{ produto['estoque_atual'] }}">
+        </div>
+        <div>
+            <label>Estoque Minimo</label>
+            <input type="number" name="estoque_minimo" value="{{ produto['estoque_minimo'] }}">
+        </div>
+        <div>
+            <label>Categoria</label>
+            <select name="categoria_id" required>
+                {% for c in categorias %}
+                <option value="{{ c['id'] }}" {{ 'selected' if c['id'] == produto['categoria_id'] else '' }}>{{ c['nome'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Fornecedor</label>
+            <select name="fornecedor_id" required>
+                {% for f in fornecedores %}
+                <option value="{{ f['id'] }}" {{ 'selected' if f['id'] == produto['fornecedor_id'] else '' }}>{{ f['nome'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="grid-column: span 2;">
+            <label>Chave Digital</label>
+            <input type="text" name="chave_digital" value="{{ produto['chave_digital'] or '' }}">
+        </div>
+        <div style="grid-column: span 2; display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem;">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Salvar Alteracoes</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

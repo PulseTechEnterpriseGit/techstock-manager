@@ -1,70 +1,80 @@
--- 1. TABELA CATEGORIAS
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    senha_hash TEXT NOT NULL,
+    cargo TEXT NOT NULL CHECK(cargo IN ('gerente', 'operador')),
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS categorias (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT NOT NULL UNIQUE
+    nome TEXT UNIQUE NOT NULL
 );
 
--- 2. TABELA FORNECEDORES
 CREATE TABLE IF NOT EXISTS fornecedores (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    razao_social TEXT NOT NULL,
-    cnpj TEXT NOT NULL UNIQUE,
-    telefone TEXT,
-    email TEXT
+    nome TEXT NOT NULL,
+    cnpj TEXT UNIQUE NOT NULL
 );
 
--- 3. TABELA PRODUTOS
 CREATE TABLE IF NOT EXISTS produtos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    sku TEXT NOT NULL UNIQUE,
+    sku TEXT UNIQUE NOT NULL,
     nome TEXT NOT NULL,
-    fabricante TEXT NOT NULL,
-    classificacao TEXT NOT NULL CHECK (classificacao IN ('Hardware', 'Software', 'Periférico')),
-    especificacao_tecnica TEXT,
-    modalidade_licenca TEXT,
-    preco_venda REAL NOT NULL CHECK (preco_venda > 0),
-    estoque_atual INTEGER NOT NULL DEFAULT 0 CHECK (estoque_atual >= 0),
-    estoque_minimo INTEGER NOT NULL DEFAULT 0 CHECK (estoque_minimo >= 0),
-    localizacao TEXT NOT NULL,
+    tipo TEXT NOT NULL CHECK(tipo IN ('fisico', 'digital')),
+    preco REAL NOT NULL CHECK(preco >= 0),
+    estoque_atual INTEGER NOT NULL DEFAULT 0,
+    estoque_minimo INTEGER NOT NULL DEFAULT 5,
+    chave_digital TEXT,
     categoria_id INTEGER NOT NULL,
     fornecedor_id INTEGER NOT NULL,
     FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE RESTRICT,
     FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id) ON DELETE RESTRICT
 );
 
--- 4. TABELA MOVIMENTAÇÕES (Auditoria)
-CREATE TABLE IF NOT EXISTS movimentacoes (
+CREATE TABLE IF NOT EXISTS vendas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    tipo TEXT NOT NULL CHECK (tipo IN ('Entrada', 'Saida')),
-    quantidade INTEGER NOT NULL CHECK (quantidade > 0),
-    data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    justificativa TEXT NOT NULL,
-    produto_id INTEGER NOT NULL,
-    FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE
+    cliente_nome TEXT NOT NULL,
+    cliente_cnpj TEXT NOT NULL,
+    forma_pagamento TEXT NOT NULL,
+    valor_total REAL NOT NULL,
+    usuario_id INTEGER NOT NULL,
+    data_venda DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE RESTRICT
 );
 
--- =========================================================================
--- CARGA DE TESTES INICIAL
--- =========================================================================
+CREATE TABLE IF NOT EXISTS itens_venda (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    venda_id INTEGER NOT NULL,
+    produto_id INTEGER NOT NULL,
+    quantidade INTEGER NOT NULL,
+    preco_unitario REAL NOT NULL,
+    subtotal REAL NOT NULL,
+    FOREIGN KEY (venda_id) REFERENCES vendas(id) ON DELETE RESTRICT,
+    FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE RESTRICT
+);
 
--- Inserção de Categorias
-INSERT OR IGNORE INTO categorias (nome) VALUES 
-('Armazenamento'),
-('Processamento'),
-('Suítes de Escritório'),
-('Sistemas Operacionais');
+CREATE TABLE IF NOT EXISTS movimentacoes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    produto_id INTEGER NOT NULL,
+    tipo TEXT NOT NULL CHECK(tipo IN ('ENTRADA', 'SAIDA')),
+    quantidade INTEGER NOT NULL,
+    motivo TEXT NOT NULL,
+    usuario_id INTEGER NOT NULL,
+    data_movimentacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE RESTRICT,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE RESTRICT
+);
 
--- Inserção de Fornecedores
-INSERT OR IGNORE INTO fornecedores (razao_social, cnpj, telefone, email) VALUES 
-('Distribuidora Tech Brasil Ltda', '11.222.333/0001-44', '(11) 3333-1111', 'contato@techbrasil.com.br'),
-('Global Cloud & Softwares S.A.', '22.333.444/0001-55', '(21) 2222-4444', 'vendas@globalcloud.com.br'),
-('Hardware Express Componentes', '33.444.555/0001-66', '(62) 3456-7890', 'comercial@hwexpress.com.br');
-
--- Inserção de Produtos (Hardware e Software)
-INSERT OR IGNORE INTO produtos (sku, nome, fabricante, classificacao, especificacao_tecnica, modalidade_licenca, preco_venda, estoque_atual, estoque_minimo, localizacao, categoria_id, fornecedor_id) VALUES 
-('HW-SSD-1TB', 'SSD NVMe 1TB PCIe 4.0', 'Kingston', 'Hardware', 'Leitura 3500MB/s, Gravação 2100MB/s', NULL, 450.00, 2, 5, 'Prateleira A1', 1, 3),
-('HW-RAM-16GB', 'Memória RAM 16GB DDR4 3200MHz', 'Corsair', 'Hardware', 'DDR4 CL16 Vengeance LPX', NULL, 280.00, 15, 4, 'Prateleira A2', 2, 3),
-('SW-WIN11-PRO', 'Windows 11 Pro Corporativo', 'Microsoft', 'Software', 'Licença eletrónica x64 OEM', 'OEM / Perpétua', 890.00, 10, 3, 'Cofre Digital #01', 4, 2),
-('SW-M365-BUS', 'Microsoft 365 Business Standard', 'Microsoft', 'Software', 'Subscrição anual para 1 utilizador', 'Assinatura Anual', 650.00, 1, 4, 'Cofre Digital #02', 3, 2),
-('HW-CPU-R5', 'Processador AMD Ryzen 5 5600', 'AMD', 'Hardware', '6 núcleos, 12 threads, 3.5GHz', NULL, 820.00, 6, 2, 'Bancada B1', 2, 1),
-('HW-MOUSE-LOG', 'Rato Sem Fios Ergonómico MX Master 3', 'Logitech', 'Periférico', 'Sensor 8000 DPI, Conexão Bluetooth', NULL, 550.00, 8, 3, 'Prateleira C3', 1, 1);
+CREATE TABLE IF NOT EXISTS auditoria_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL,
+    acao TEXT NOT NULL,
+    detalhes TEXT NOT NULL,
+    ip_origem TEXT,
+    data_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE RESTRICT
+);
